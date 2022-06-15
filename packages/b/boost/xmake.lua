@@ -66,7 +66,7 @@ package("boost")
                       "stacktrace",
                       "type_erasure"}
 
-    add_configs("all",          { description = "Enable all library modules support.",  default = false, type = "boolean"})
+    add_configs("all",          { description = "Enable all library modules support.",  default = true, type = "boolean"})
     add_configs("multi",        { description = "Enable multi-thread support.",  default = true, type = "boolean"})
     for _, libname in ipairs(libnames) do
         add_configs(libname,    { description = "Enable " .. libname .. " library.", default = (libname == "filesystem"), type = "boolean"})
@@ -175,6 +175,15 @@ package("boost")
     on_test(function (package)
         assert(package:check_cxxsnippets({test = [[
             #include <boost/algorithm/string.hpp>
+            
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/record_ostream.hpp>
             #include <string>
             #include <vector>
             static void test() {
@@ -189,6 +198,7 @@ package("boost")
                 #include <boost/date_time/gregorian/gregorian.hpp>
                 static void test() {
                     boost::gregorian::date d(2010, 1, 30);
+                    boost::log::add_common_attributes();
                 }
             ]]}, {configs = {languages = "c++14"}}))
         end
