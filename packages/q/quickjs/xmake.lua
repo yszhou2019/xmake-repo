@@ -12,6 +12,10 @@ package("quickjs")
         add_syslinks("dl", "m")
     end
 
+    if is_plat("windows") then
+        add_patches("2021.03.27", path.join(os.scriptdir(), "patches", "2021.03.27", "fix_msvc.patch"), "0bde6b95dfb6da696d34222b75e733347edf9b4674c822da78ed22952bbb98c2")
+    end
+    
     on_install("linux", "macosx", "iphoneos", "android", "mingw", "cross", function (package)
         io.writefile("xmake.lua", ([[
             add_rules("mode.debug", "mode.release")
@@ -36,6 +40,28 @@ package("quickjs")
             io.replace("quickjs.c", "#define CONFIG_PRINTF_RNDN", "")
         end
         import("package.tools.xmake").install(package, configs)
+    end)
+
+    on_install("windows", function (package)
+        io.writefile("xmake.lua", ([[
+            add_rules("mode.debug", "mode.release")
+            target("quickjs")
+                set_kind("$(kind)")
+                add_files("quickjs*.c", "cutils.c", "lib*.c")
+                add_headerfiles("quickjs*.h", "cutils.h", "lib*.h", "list.h")
+                add_installfiles("*.js", {prefixdir = "share"})
+                set_languages("c99")
+        ]]))
+        local configs = {}
+        if package:config("shared") then
+            configs.kind = "shared"
+        end
+        if package:is_plat("cross") then
+            io.replace("quickjs.c", "#define CONFIG_PRINTF_RNDN", "")
+        end
+        import("package.tools.cmake").install(package)
+        -- premake生成sln
+        -- msvc编译
     end)
 
     on_test(function (package)
